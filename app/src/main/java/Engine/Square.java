@@ -7,17 +7,32 @@ public class Square {
     }
 
     public enum State {
-        Open, Close, Mark
+        Open, Close
+    }
+
+    public enum Flag {
+        Yes, No
     }
 
     private int value;
     private Type type;
     private State state;
+    private Flag flag;
 
     public Square(int value, Type type, State state) {
         this.value = value;
         this.type = type;
         this.state = state;
+        this.flag = Flag.No;
+    }
+
+    public void setFlag(Flag flag) {
+        this.flag = flag;
+    }
+
+    public Flag getFlag() {
+
+        return flag;
     }
 
     public int getValue() {

@@ -25,6 +25,22 @@ public class Board {
         this.generateInitBoard();
     }
 
+    public int getDifficulty() {
+        return this.difficulty;
+    }
+
+    public int getTotalMines() {
+        return this.numberOfMines;
+    }
+
+    public int getSizeX() {
+        return this.sizeX;
+    }
+
+    public int getSizeY() {
+        return this.sizeY;
+    }
+
     private void generateInitBoard() {
         for (int j = 0; j < this.sizeY; j++) {
             for (int i = 0; i < this.sizeX; i++) {
@@ -164,9 +180,28 @@ public class Board {
                 this.squares[current.y][current.x].setState(Square.State.Open);
             } else if(this.positionInBounds(current.y, current.x) && this.squares[current.y][current.x].getType() == Square.Type.Hint) {
                 this.squares[current.y][current.x].setState(Square.State.Open);
+            } else if(this.positionInBounds(current.y, current.x) && this.squares[current.y][current.x].getType() == Square.Type.Mine) {
+                this.squares[current.y][current.x].setState(Square.State.Open);
             }
 
             queue.remove(0);
         } while(queue.size() > 0);
+    }
+
+    public void openAll() {
+        for (int j = 0; j < this.squares.length; j++) {
+            for (int i = 0; i < this.squares[0].length; i++) {
+                this.squares[j][i].setState(Square.State.Open);
+            }
+        }
+    }
+
+    public void closeAll() {
+        for (int j = 0; j < this.squares.length; j++) {
+            for (int i = 0; i < this.squares[0].length; i++) {
+                this.squares[j][i].setState(Square.State.Close);
+                this.squares[j][i].setFlag(Square.Flag.No);
+            }
+        }
     }
 }

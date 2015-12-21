@@ -18,4 +18,10 @@
         <item name="android:textColor">#FFFFFFFF</item>
     </style>
 
+    <style name="gameBoardSquareHint" parent="gameBoardSquare">
+        <item name="android:color">#FF000000</item>
+        <item name="android:textColor">#FF000000</item>
+        <item name="android:textStyle">bold</item>
+    </style>
+
 </resources>
