@@ -11,7 +11,7 @@ public class Square {
     }
 
     public enum Flag {
-        Yes, No, Test
+        Yes, No
     }
 
     private int value;
