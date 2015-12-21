@@ -10,6 +10,8 @@ import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewTreeObserver;
+import android.view.animation.Animation;
+import android.view.animation.AnimationUtils;
 import android.widget.Button;
 import android.widget.GridLayout;
 import android.widget.ImageButton;
@@ -92,6 +94,8 @@ public class MainActivity extends AppCompatActivity {
                     for (int j = 0; j < boardMatrix.length; j++) {
                         for (int i = 0; i < boardMatrix[0].length; i++) {
 
+                            final Animation animScale = AnimationUtils.loadAnimation(_this, R.anim.anim_scale);
+
                             final ImageButton btn = new ImageButton(new ContextThemeWrapper(_this, R.style.gameBoardSquare), null, 0);
                             btn.setBackground(getResources().getDrawable(R.drawable.button_dark_gradient));
                             btn.setLayoutParams(new ViewGroup.LayoutParams((sizeBoardX / _this.board.getSizeX()), (sizeBoardY / _this.board.getSizeY())));
@@ -105,6 +109,8 @@ public class MainActivity extends AppCompatActivity {
                                 @Override
                                 public void onClick(View v) {
                                     Square[][] boardMatrix = _this.board.getBoardMatrix();
+
+                                    //btn.startAnimation(animScale);
 
                                     if (boardMatrix[_posY][_posX].getState() == Square.State.Close && boardMatrix[_posY][_posX].getFlag() == Square.Flag.No) {
                                         _this.openSquare(btn, _posY, _posX);
@@ -194,6 +200,33 @@ public class MainActivity extends AppCompatActivity {
                         } else {
                             this.uiSquares.get(j + "-" + i).setBackground(getResources().getDrawable(R.drawable.button_bomb_gradient));
                         }
+
+                    }
+
+                    final int _posX = i;
+                    final int _posY = j;
+
+                    if(!boardMatrix[j][i].getFinishOpenState()) {
+                        final Animation animScale = AnimationUtils.loadAnimation(this, R.anim.anim_scale);
+
+                        animScale.setAnimationListener(new Animation.AnimationListener() {
+                            @Override
+                            public void onAnimationStart(Animation animation) {
+
+                            }
+
+                            @Override
+                            public void onAnimationEnd(Animation animation) {
+                                boardMatrix[_posY][_posX].setFinishOpenState(true);
+                            }
+
+                            @Override
+                            public void onAnimationRepeat(Animation animation) {
+
+                            }
+                        });
+
+                        this.uiSquares.get(j + "-" + i).startAnimation(animScale);
 
                     }
                 }

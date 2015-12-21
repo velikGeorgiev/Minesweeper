@@ -18,12 +18,14 @@ public class Square {
     private Type type;
     private State state;
     private Flag flag;
+    private boolean finishOpenState;
 
     public Square(int value, Type type, State state) {
         this.value = value;
         this.type = type;
         this.state = state;
         this.flag = Flag.No;
+        this.finishOpenState = false;
     }
 
     public void setFlag(Flag flag) {
@@ -31,9 +33,14 @@ public class Square {
     }
 
     public Flag getFlag() {
-
         return flag;
     }
+
+    public void setFinishOpenState(boolean state) {
+        this.finishOpenState = state;
+    }
+
+    public boolean getFinishOpenState() { return this.finishOpenState; }
 
     public int getValue() {
         return value;

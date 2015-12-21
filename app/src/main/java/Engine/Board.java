@@ -201,6 +201,7 @@ public class Board {
             for (int i = 0; i < this.squares[0].length; i++) {
                 this.squares[j][i].setState(Square.State.Close);
                 this.squares[j][i].setFlag(Square.Flag.No);
+                this.squares[j][i].setFinishOpenState(false);
             }
         }
     }
