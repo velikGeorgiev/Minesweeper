@@ -31,6 +31,8 @@ public class MainActivity extends AppCompatActivity {
     private TextView mineNumberLbl;
 
     private boolean boardUiDrawed = false;
+    private int[] numberImageResourceId;
+
     private HashMap<String, ImageButton> uiSquares;
     private Board board;
 
@@ -39,14 +41,19 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        Board.imageBomb = '*';
-        Board.imageFlag = 'f';
+        Board.imageBomb = '*'; // TODO: Implement
+        Board.imageFlag = 'f'; // TODO: Implement
 
         this.uiSquares = new HashMap<>();
 
         this.gridBoard = (GridLayout) findViewById(R.id.gridBoard);
         this.mineNumberLbl = (TextView) findViewById(R.id.mineNumberLbl);
         this.newGrid(10, 10, 2);
+
+        // Numeric image resource ids
+        this.numberImageResourceId = new int[] { R.drawable.ic_num0, R.drawable.ic_num1, R.drawable.ic_num2, R.drawable.ic_num3,
+                R.drawable.ic_num4, R.drawable.ic_num5, R.drawable.ic_num6,
+                R.drawable.ic_num7, R.drawable.ic_num8, R.drawable.ic_num9 };
     }
 
     public void restartGameAction(View v) {
@@ -73,16 +80,19 @@ public class MainActivity extends AppCompatActivity {
             this.board.addOnMineOpenListener(new Engine.Events.OnMineOpenListener() {
 
                 @Override
-                public void mineOpen(int y, int x) {
-                    Log.e("OPEN SQUARE", "BUUUM Pos: " + y + " - " + x);
+                public void mineOpen(int y, int x, Board targetBoard) {
+                    if((targetBoard.getBoardMatrix()[y][x]).getType() == Square.Type.Mine) {
+                        targetBoard.openAll();
+                    }
                 }
             });
 
             this.board.addOnSquareOpenListener(new Engine.Events.OnSquareOpenListener() {
 
                 @Override
-                public void squareOpen(int y, int x) {
-                    Log.e("OPEN SQUARE", "NEW SQUARE OPENED  Pos: " + y + " - " + x);
+                public void squareOpen(int y, int x, Board targetBoard) {
+                    // When a square is opened the GUI board will be repainted
+                    repaintGuiGrid();
                 }
             });
         }
@@ -126,10 +136,8 @@ public class MainActivity extends AppCompatActivity {
                                 public void onClick(View v) {
                                     Square[][] boardMatrix = _this.board.getBoardMatrix();
 
-                                    //btn.startAnimation(animScale);
-
                                     if (boardMatrix[_posY][_posX].getState() == Square.State.Close && boardMatrix[_posY][_posX].getFlag() == Square.Flag.No) {
-                                        _this.openSquare(btn, _posY, _posX);
+                                        _this.board.openSquare(_posY, _posX);
                                     }
                                 }
                             });
@@ -161,60 +169,33 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
-    public void openSquare(ImageButton target, int y, int x) {
-        this.board.openSquare(y, x);
-
+    public void repaintGuiGrid() {
         final Square[][] boardMatrix = this.board.getBoardMatrix();
-
-        if(boardMatrix[y][x].getType() == Square.Type.Mine) {
-            this.board.openAll();
-        }
 
         for (int j = 0; j < boardMatrix.length; j++) {
             for (int i = 0; i < boardMatrix[0].length; i++) {
+
+                ImageButton currentImageButton = this.uiSquares.get(j + "-" + i);
+
                 if(boardMatrix[j][i].getState() == Square.State.Open) {
                     if (boardMatrix[j][i].getType() == Square.Type.Mine) {
                         if (boardMatrix[j][i].getFlag() == Square.Flag.No) {
-                            this.uiSquares.get(j + "-" + i).setBackground(getResources().getDrawable(R.drawable.button_bomb_gradient));
+                            currentImageButton.setBackground(getResources().getDrawable(R.drawable.button_bomb_gradient));
                         } else {
-                            this.uiSquares.get(j + "-" + i).setBackground(getResources().getDrawable(R.drawable.button_green_gradient));
+                            currentImageButton.setBackground(getResources().getDrawable(R.drawable.button_green_gradient));
                         }
 
-                        this.uiSquares.get(j + "-" + i).setImageResource(R.mipmap.bomb);
+                        currentImageButton.setImageResource(R.mipmap.bomb);
                     } else if (boardMatrix[j][i].getType() == Square.Type.Empty) {
-                        this.uiSquares.get(j + "-" + i).setBackground(getResources().getDrawable(R.drawable.button_light_gradient));
+                        currentImageButton.setBackground(getResources().getDrawable(R.drawable.button_light_gradient));
                     } else {
 
-                        switch(boardMatrix[j][i].getValue()) {
-                            case 1:
-                                this.uiSquares.get(j + "-" + i).setImageResource(R.drawable.ic_num1);
-                                break;
-                            case 2:
-                                this.uiSquares.get(j + "-" + i).setImageResource(R.drawable.ic_num2);
-                                break;
-                            case 3:
-                                this.uiSquares.get(j + "-" + i).setImageResource(R.drawable.ic_num3);
-                                break;
-                            case 4:
-                                this.uiSquares.get(j + "-" + i).setImageResource(R.drawable.ic_num4);
-                                break;
-                            case 5:
-                                this.uiSquares.get(j + "-" + i).setImageResource(R.drawable.ic_num5);
-                                break;
-                            case 6:
-                                this.uiSquares.get(j + "-" + i).setImageResource(R.drawable.ic_num6);
-                                break;
-                            case 7:
-                                this.uiSquares.get(j + "-" + i).setImageResource(R.drawable.ic_num7);
-                                break;
-                            case 8:
-                                this.uiSquares.get(j + "-" + i).setImageResource(R.drawable.ic_num8);
-                                break;
-                        }
+                        currentImageButton.setImageResource(this.numberImageResourceId[boardMatrix[j][i].getValue()]);
+
                         if (boardMatrix[j][i].getFlag() == Square.Flag.No) {
-                            this.uiSquares.get(j + "-" + i).setBackground(getResources().getDrawable(R.drawable.button_yellow_gradient));
+                            currentImageButton.setBackground(getResources().getDrawable(R.drawable.button_yellow_gradient));
                         } else {
-                            this.uiSquares.get(j + "-" + i).setBackground(getResources().getDrawable(R.drawable.button_bomb_gradient));
+                            currentImageButton.setBackground(getResources().getDrawable(R.drawable.button_bomb_gradient));
                         }
 
                     }

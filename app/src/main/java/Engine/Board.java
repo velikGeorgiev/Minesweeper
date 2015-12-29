@@ -204,13 +204,13 @@ public class Board {
 
         if(!this.isNotMineSquare(new Pos(i, j))) {
             for (OnMineOpenListener listener : this.onMineOpenListeners) {
-                listener.mineOpen(j, i);
+                listener.mineOpen(j, i, this);
             }
         }
 
         if(this.positionInBounds(i, j)) {
             for (OnSquareOpenListener listener : this.onSquareOpenListeners) {
-                listener.squareOpen(j, i);
+                listener.squareOpen(j, i, this);
             }
         }
     }
