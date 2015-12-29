@@ -69,6 +69,22 @@ public class MainActivity extends AppCompatActivity {
 
         if(restart || this.board == null) {
             this.board = new Board(gameSettingsX, gameSettingsY, gameSettingsLevel);
+
+            this.board.addOnMineOpenListener(new Engine.Events.OnMineOpenListener() {
+
+                @Override
+                public void mineOpen(int y, int x) {
+                    Log.e("OPEN SQUARE", "BUUUM Pos: " + y + " - " + x);
+                }
+            });
+
+            this.board.addOnSquareOpenListener(new Engine.Events.OnSquareOpenListener() {
+
+                @Override
+                public void squareOpen(int y, int x) {
+                    Log.e("OPEN SQUARE", "NEW SQUARE OPENED  Pos: " + y + " - " + x);
+                }
+            });
         }
 
         this.board.closeAll();

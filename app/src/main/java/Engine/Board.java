@@ -1,7 +1,11 @@
 package Engine;
 
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Random;
+
+import Engine.Events.OnMineOpenListener;
+import Engine.Events.OnSquareOpenListener;
 
 public class Board {
     public static char imageBomb;
@@ -14,6 +18,9 @@ public class Board {
     private int totalSquares;
     private Square[][] squares;
 
+    private final List<OnMineOpenListener> onMineOpenListeners = new ArrayList<>();
+    private final List<OnSquareOpenListener> onSquareOpenListeners = new ArrayList<>();
+
     public Board(int sizeX, int sizeY, int difficulty) {
         this.sizeX = sizeX;
         this.sizeY = sizeY;
@@ -23,6 +30,14 @@ public class Board {
         this.numberOfMines = (int)Math.ceil(totalSquares * (this.difficulty / 10f));
 
         this.generateInitBoard();
+    }
+
+    public void addOnSquareOpenListener(OnSquareOpenListener listener) {
+        this.onSquareOpenListeners.add(listener);
+    }
+
+    public void addOnMineOpenListener(OnMineOpenListener listener) {
+        this.onMineOpenListeners.add(listener);
     }
 
     public int getDifficulty() {
@@ -186,6 +201,18 @@ public class Board {
 
             queue.remove(0);
         } while(queue.size() > 0);
+
+        if(!this.isNotMineSquare(new Pos(i, j))) {
+            for (OnMineOpenListener listener : this.onMineOpenListeners) {
+                listener.mineOpen(j, i);
+            }
+        }
+
+        if(this.positionInBounds(i, j)) {
+            for (OnSquareOpenListener listener : this.onSquareOpenListeners) {
+                listener.squareOpen(j, i);
+            }
+        }
     }
 
     public void openAll() {
