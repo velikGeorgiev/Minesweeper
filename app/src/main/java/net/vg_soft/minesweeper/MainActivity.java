@@ -163,9 +163,8 @@ public class MainActivity extends AppCompatActivity {
                     for (int j = 0; j < boardMatrix.length; j++) {
                         for (int i = 0; i < boardMatrix[0].length; i++) {
 
-                            final Animation animScale = AnimationUtils.loadAnimation(_this, R.anim.anim_scale);
-
                             final ImageButton btn = new ImageButton(new ContextThemeWrapper(_this, R.style.gameBoardSquare), null, 0);
+
                             btn.setBackground(getResources().getDrawable(R.drawable.button_dark_gradient));
                             btn.setLayoutParams(new ViewGroup.LayoutParams((sizeBoardX / _this.board.getSizeX()), (sizeBoardY / _this.board.getSizeY())));
 
