@@ -1,5 +1,6 @@
 package net.vg_soft.minesweeper;
 
+import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.drawable.BitmapDrawable;
@@ -120,7 +121,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         int id = item.getItemId();
 
         if (id == R.id.nav_howto) {
-
+            startActivity(new Intent(MainActivity.this, InfoActivity.class));
         } else if (id == R.id.nav_difficulty) {
 
         } else if (id == R.id.nav_boardsize) {
