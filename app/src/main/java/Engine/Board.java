@@ -1,10 +1,14 @@
 package Engine;
 
+import android.util.Log;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
+import Engine.Events.OnGameOverListener;
 import Engine.Events.OnMineOpenListener;
+import Engine.Events.OnSquareFlagListener;
 import Engine.Events.OnSquareOpenListener;
 
 public class Board {
@@ -18,8 +22,13 @@ public class Board {
     private int totalSquares;
     private Square[][] squares;
 
+    private int openSquares;
+    private int flagedSquares;
+
     private final List<OnMineOpenListener> onMineOpenListeners = new ArrayList<>();
     private final List<OnSquareOpenListener> onSquareOpenListeners = new ArrayList<>();
+    private final List<OnSquareFlagListener> onSquareFlagListeners = new ArrayList<>();
+    private final List<OnGameOverListener> onGameOverListeners = new ArrayList<>();
 
     public Board(int sizeX, int sizeY, int difficulty) {
         this.sizeX = sizeX;
@@ -27,7 +36,9 @@ public class Board {
         this.difficulty = difficulty;
         this.squares = new Square[sizeY][sizeX];
         this.totalSquares = this.sizeX * this.sizeY;
-        this.numberOfMines = (int)Math.ceil(totalSquares * (this.difficulty / 10f));
+        this.numberOfMines = (int)Math.ceil(totalSquares * (this.difficulty / 10f)) - 15;
+        this.openSquares = 0;
+        this.flagedSquares = 0;
 
         this.generateInitBoard();
     }
@@ -60,11 +71,110 @@ public class Board {
         for (int j = 0; j < this.sizeY; j++) {
             for (int i = 0; i < this.sizeX; i++) {
                 this.squares[j][i] = new Square(0, Square.Type.Empty, Square.State.Close);
+
+                this.squares[j][i].addOnFlagListener(new OnSquareFlagListener() {
+                    @Override
+                    public void onFlag(Square square) {
+                        squareFlagLister(square);
+                    }
+
+                    @Override
+                    public void onUnflag(Square square) {
+                        squareUnflagLister(square);
+                    }
+                });
             }
         }
 
         this.fillWithMines();
         this.generateBoard();
+    }
+
+    public void squareFlagLister(Square square) {
+        this.increaseFlagedSquares();
+
+        for (OnSquareFlagListener listener : this.onSquareFlagListeners) {
+            listener.onFlag(square);
+        }
+    }
+
+    public void squareUnflagLister(Square square) {
+        this.decreaseFlagedSquares();
+
+        for (OnSquareFlagListener listener : this.onSquareFlagListeners) {
+            listener.onUnflag(square);
+        }
+    }
+
+    private void increaseOpenSquares() {
+        this.openSquares++;        Log.e("--->", this.openSquares + " " + this.flagedSquares + " --> " + (this.sizeX * this.sizeY) );
+
+        if((this.flagedSquares + this.openSquares) >= (this.sizeX * this.sizeY)) {
+
+            boolean win = true;
+
+            for(int c = 0; c < this.squares.length; c++) {
+                for(int x = 0; x < this.squares[c].length; x++) {
+                    if((this.squares[c][x].getFlag() == Square.Flag.Yes && this.squares[c][x].getType() != Square.Type.Mine) ||
+                            (this.squares[c][x].getFlag() == Square.Flag.No && this.squares[c][x].getType() == Square.Type.Mine)) {
+                        win = false;
+                    }
+                }
+            }
+
+            for (OnGameOverListener listener : this.onGameOverListeners) {
+                if(win) {
+                    listener.onWin();
+                } else {
+                    listener.onLose();
+                }
+            }
+        }
+    }
+
+    private void decreaseOpenSquares() {
+        this.openSquares++;
+    }
+
+    private void increaseFlagedSquares() {
+        this.flagedSquares++;
+
+        if((this.flagedSquares + this.openSquares) >= (this.sizeX * this.sizeY)) {
+
+            boolean win = true;
+
+            for(int c = 0; c < this.squares.length; c++) {
+                for(int x = 0; x < this.squares[c].length; x++) {
+                    if((this.squares[c][x].getFlag() == Square.Flag.Yes && this.squares[c][x].getType() != Square.Type.Mine) ||
+                            (this.squares[c][x].getFlag() == Square.Flag.No && this.squares[c][x].getType() == Square.Type.Mine)) {
+
+                        win = false;
+                    }
+                }
+            }
+
+            for (OnGameOverListener listener : this.onGameOverListeners) {
+                if(win) {
+                    listener.onWin();
+                } else {
+                    listener.onLose();
+                }
+            }
+        }
+    }
+
+    private void decreaseFlagedSquares() {
+        if((this.flagedSquares - 1) >= 0) {
+            this.flagedSquares--;
+        }
+    }
+
+    public void addOnSquareFlagListener(OnSquareFlagListener listener) {
+        this.onSquareFlagListeners.add(listener);
+    }
+
+    public void addOnGameOverListeners(OnGameOverListener listener) {
+        this.onGameOverListeners.add(listener);
     }
 
     public Square[][] getBoardMatrix() {
@@ -182,43 +292,76 @@ public class Board {
 
         do {
             Pos current = (Pos) queue.get(0);
-            Pos neighbors[] = current.getNeighbors();
 
-            if(this.isEmptySquare(current.y, current.x) && this.squares[current.y][current.x].getState() != Square.State.Open) { // If the square is already open, ignore it
+            if(this.squares[current.y][current.x].getFlag() == Square.Flag.No) {
+                Pos neighbors[] = current.getNeighbors();
 
-                for(int z = 0; z < neighbors.length; z++) {
-                    if(this.isNotMineSquare(neighbors[z])) {
-                        queue.add(neighbors[z]);
+                if (this.isEmptySquare(current.y, current.x) && this.squares[current.y][current.x].getState() != Square.State.Open) { // If the square is already open, ignore it
+
+                    for (int z = 0; z < neighbors.length; z++) {
+                        if (this.isNotMineSquare(neighbors[z])) {
+                            queue.add(neighbors[z]);
+                        }
+                    }
+
+                    this.squares[current.y][current.x].setState(Square.State.Open);
+                    this.increaseOpenSquares();
+                } else if (this.positionInBounds(current.y, current.x) && this.squares[current.y][current.x].getType() == Square.Type.Hint) {
+                    if(this.squares[current.y][current.x].getState() != Square.State.Open) {
+                        this.increaseOpenSquares();
+                        this.squares[current.y][current.x].setState(Square.State.Open);
+                    }
+                } else if (this.positionInBounds(current.y, current.x) && this.squares[current.y][current.x].getType() == Square.Type.Mine) {
+                    this.squares[current.y][current.x].setState(Square.State.Open);
+
+                    if(this.squares[current.y][current.x].getState() != Square.State.Open) {
+                        this.increaseOpenSquares();
                     }
                 }
-
-                this.squares[current.y][current.x].setState(Square.State.Open);
-            } else if(this.positionInBounds(current.y, current.x) && this.squares[current.y][current.x].getType() == Square.Type.Hint) {
-                this.squares[current.y][current.x].setState(Square.State.Open);
-            } else if(this.positionInBounds(current.y, current.x) && this.squares[current.y][current.x].getType() == Square.Type.Mine) {
-                this.squares[current.y][current.x].setState(Square.State.Open);
             }
 
             queue.remove(0);
-        } while(queue.size() > 0);
+        } while (queue.size() > 0);
 
-        if(!this.isNotMineSquare(new Pos(i, j))) {
-            for (OnMineOpenListener listener : this.onMineOpenListeners) {
-                listener.mineOpen(j, i, this);
+        if(this.squares[j][i].getFlag() == Square.Flag.No) {
+            if (!this.isNotMineSquare(new Pos(i, j))) {
+                for (OnMineOpenListener listener : this.onMineOpenListeners) {
+                    listener.mineOpen(j, i, this, this.squares[j][i]);
+                }
+            }
+
+            if (this.positionInBounds(i, j)) {
+                for (OnSquareOpenListener listener : this.onSquareOpenListeners) {
+                    listener.squareOpen(j, i, this, this.squares[j][i]);
+                }
             }
         }
 
-        if(this.positionInBounds(i, j)) {
-            for (OnSquareOpenListener listener : this.onSquareOpenListeners) {
-                listener.squareOpen(j, i, this);
-            }
-        }
     }
 
     public void openAll() {
+        boolean win = true;
+
         for (int j = 0; j < this.squares.length; j++) {
             for (int i = 0; i < this.squares[0].length; i++) {
                 this.squares[j][i].setState(Square.State.Open);
+            }
+        }
+
+        for(int c = 0; c < this.squares.length; c++) {
+            for(int x = 0; x < this.squares[c].length; x++) {
+                if((this.squares[c][x].getFlag() == Square.Flag.Yes && this.squares[c][x].getType() != Square.Type.Mine) ||
+                        (this.squares[c][x].getFlag() == Square.Flag.No && this.squares[c][x].getType() == Square.Type.Mine)) {
+                    win = false;
+                }
+            }
+        }
+
+        for (OnGameOverListener listener : this.onGameOverListeners) {
+            if(win) {
+                listener.onWin();
+            } else {
+                listener.onLose();
             }
         }
     }
@@ -231,5 +374,8 @@ public class Board {
                 this.squares[j][i].setFinishOpenState(false);
             }
         }
+
+        this.flagedSquares = 0;
+        this.openSquares = 0;
     }
 }

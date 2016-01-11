@@ -1,5 +1,10 @@
 package Engine;
 
+import java.util.ArrayList;
+import java.util.List;
+
+import Engine.Events.OnSquareFlagListener;
+
 public class Square {
 
     public enum Type {
@@ -19,6 +24,7 @@ public class Square {
     private State state;
     private Flag flag;
     private boolean finishOpenState;
+    private final List<OnSquareFlagListener> flagListeners = new ArrayList<>();
 
     public Square(int value, Type type, State state) {
         this.value = value;
@@ -29,6 +35,17 @@ public class Square {
     }
 
     public void setFlag(Flag flag) {
+
+        if(flag == Flag.Yes) {
+            for (OnSquareFlagListener listener : this.flagListeners) {
+                listener.onFlag(this);
+            }
+        } else {
+            for (OnSquareFlagListener listener : this.flagListeners) {
+                listener.onUnflag(this);
+            }
+        }
+
         this.flag = flag;
     }
 
@@ -73,5 +90,9 @@ public class Square {
 
     public State getState() {
         return state;
+    }
+
+    public void addOnFlagListener(OnSquareFlagListener listener) {
+        this.flagListeners.add(listener);
     }
 }

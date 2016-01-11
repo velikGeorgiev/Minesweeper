@@ -28,6 +28,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 
 import Engine.Board;
+import Engine.Events.OnGameOverListener;
+import Engine.Events.OnSquareFlagListener;
 import Engine.Square;
 
 import android.support.design.widget.FloatingActionButton;
@@ -144,12 +146,13 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
 
         if(restart || this.board == null) {
             this.board = new Board(gameSettingsX, gameSettingsY, gameSettingsLevel);
+            final MainActivity _this = this;
 
             this.board.addOnMineOpenListener(new Engine.Events.OnMineOpenListener() {
 
                 @Override
-                public void mineOpen(int y, int x, Board targetBoard) {
-                    if((targetBoard.getBoardMatrix()[y][x]).getType() == Square.Type.Mine) {
+                public void mineOpen(int y, int x, Board targetBoard, Square targetSquare) {
+                    if (targetSquare.getType() == Square.Type.Mine) {
                         targetBoard.openAll();
                     }
                 }
@@ -158,9 +161,49 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
             this.board.addOnSquareOpenListener(new Engine.Events.OnSquareOpenListener() {
 
                 @Override
-                public void squareOpen(int y, int x, Board targetBoard) {
+                public void squareOpen(int y, int x, Board targetBoard, Square targetSquare) {
                     // When a square is opened the GUI board will be repainted
                     repaintGuiGrid();
+                }
+            });
+
+            this.board.addOnGameOverListeners(new OnGameOverListener() {
+                @Override
+                public void onWin() {
+                    Log.e("STATE", "WIN");
+                }
+
+                @Override
+                public void onLose() {
+                    Log.e("STATE", "LOSE");
+                }
+            });
+
+            this.board.addOnSquareFlagListener(new OnSquareFlagListener() {
+                @Override
+                public void onFlag(Square square) {
+                    int currentNumber = 0;
+
+                    if (!_this.mineNumberLbl.getText().toString().equals("")) {
+                        currentNumber = Integer.parseInt(_this.mineNumberLbl.getText().toString());
+                    }
+
+                    if (_this.mineNumberLbl != null) {
+                        _this.mineNumberLbl.setText(--currentNumber + "");
+                    }
+                }
+
+                @Override
+                public void onUnflag(Square square) {
+                    int currentNumber = 0;
+
+                    if (!_this.mineNumberLbl.getText().toString().equals("")) {
+                        currentNumber = Integer.parseInt(_this.mineNumberLbl.getText().toString());
+                    }
+
+                    if (_this.mineNumberLbl != null) {
+                        _this.mineNumberLbl.setText(++currentNumber + "");
+                    }
                 }
             });
         }
@@ -174,7 +217,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         _this.boardUiDrawed = false;
 
         this.gridBoard.setColumnCount(this.board.getSizeX());
-        this.mineNumberLbl.setText("Minas: " + this.board.getTotalMines());
+        this.mineNumberLbl.setText(this.board.getTotalMines() + "");
 
         this.gridBoard.getViewTreeObserver().addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
             @Override
@@ -188,9 +231,8 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
                     for (int j = 0; j < boardMatrix.length; j++) {
                         for (int i = 0; i < boardMatrix[0].length; i++) {
 
-                            final Animation animScale = AnimationUtils.loadAnimation(_this, R.anim.anim_scale);
-
                             final ImageButton btn = new ImageButton(new ContextThemeWrapper(_this, R.style.gameBoardSquare), null, 0);
+
                             btn.setBackground(getResources().getDrawable(R.drawable.button_dark_gradient));
                             btn.setLayoutParams(new ViewGroup.LayoutParams((sizeBoardX / _this.board.getSizeX()), (sizeBoardY / _this.board.getSizeY())));
 
