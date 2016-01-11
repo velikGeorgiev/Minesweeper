@@ -100,7 +100,8 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
     public boolean onOptionsItemSelected(MenuItem item) {
         int id = item.getItemId();
 
-        if (id == R.id.action_settings) {
+        if (id == R.id.action_restart) {
+            newGrid(this.board.getSizeX(), this.board.getSizeY(), this.board.getDifficulty());
             return true;
         }
 
