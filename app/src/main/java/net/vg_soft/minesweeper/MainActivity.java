@@ -21,6 +21,9 @@ import android.view.animation.AnimationUtils;
 import android.widget.Button;
 import android.widget.GridLayout;
 import android.widget.ImageButton;
+import android.widget.LinearLayout;
+import android.widget.RelativeLayout;
+import android.widget.ScrollView;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -70,7 +73,9 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
 
         this.uiSquares = new HashMap<>();
 
-        this.gridBoard = (GridLayout) findViewById(R.id.gridBoard);
+        LinearLayout mainLayout = (LinearLayout)findViewById(R.id.mainLinerLayout);
+
+        this.gridBoard = (GridLayout) mainLayout.findViewById(R.id.gridBoard);
         this.mineNumberLbl = (TextView) findViewById(R.id.mineNumberLbl);
         this.newGrid(10, 10, 2);
 
@@ -220,62 +225,85 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         this.gridBoard.setColumnCount(this.board.getSizeX());
         this.mineNumberLbl.setText(this.board.getTotalMines() + "");
 
-        this.gridBoard.getViewTreeObserver().addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
+        ((LinearLayout) findViewById(R.id.mainLinerLayout)).getViewTreeObserver().addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
             @Override
             public void onGlobalLayout() {
-                Square[][] boardMatrix = _this.board.getBoardMatrix();
-
                 if (_this.boardUiDrawed == false) {
-                    int sizeBoardX = _this.gridBoard.getWidth();
-                    int sizeBoardY = (_this.gridBoard.getHeight() < _this.gridBoard.getWidth()) ? _this.gridBoard.getHeight() : _this.gridBoard.getWidth();
+                    ((LinearLayout) findViewById(R.id.mainLinerLayout)).setMinimumWidth(((RelativeLayout) findViewById(R.id.scrollViewLayout)).getWidth());
+                    ((LinearLayout) findViewById(R.id.mainLinerLayout)).setMinimumHeight(((RelativeLayout) findViewById(R.id.scrollViewLayout)).getHeight());
+                }
 
-                    for (int j = 0; j < boardMatrix.length; j++) {
-                        for (int i = 0; i < boardMatrix[0].length; i++) {
+                _this.gridBoard.getViewTreeObserver().addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
+                    @Override
+                    public void onGlobalLayout() {
+                        if (_this.boardUiDrawed == false) {
 
-                            final ImageButton btn = new ImageButton(new ContextThemeWrapper(_this, R.style.gameBoardSquare), null, 0);
+                            _this.gridBoard.setMinimumWidth(((RelativeLayout) findViewById(R.id.scrollViewLayout)).getWidth());
+                            _this.gridBoard.setMinimumHeight(((RelativeLayout) findViewById(R.id.scrollViewLayout)).getHeight() - 200);
+                        }
+                        Square[][] boardMatrix = _this.board.getBoardMatrix();
 
-                            btn.setBackground(getResources().getDrawable(R.drawable.button_dark_gradient));
-                            btn.setLayoutParams(new ViewGroup.LayoutParams((sizeBoardX / _this.board.getSizeX()), (sizeBoardY / _this.board.getSizeY())));
+                        if (_this.boardUiDrawed == false) {
+                            int sizeBoardX = _this.gridBoard.getWidth();
+                            int tempHeight = ((RelativeLayout) findViewById(R.id.scrollViewLayout)).getHeight();
+                            int sizeBoardY = (tempHeight < _this.gridBoard.getWidth()) ? tempHeight : _this.gridBoard.getWidth();
 
-                            _this.uiSquares.put((j + "-" + i), btn);
+                            for (int j = 0; j < boardMatrix.length; j++) {
+                                for (int i = 0; i < boardMatrix[0].length; i++) {
 
-                            final int _posX = i;
-                            final int _posY = j;
+                                    final ImageButton btn = new ImageButton(new ContextThemeWrapper(_this, R.style.gameBoardSquare), null, 0);
 
-                            btn.setOnClickListener(new View.OnClickListener() {
-                                @Override
-                                public void onClick(View v) {
-                                    Square[][] boardMatrix = _this.board.getBoardMatrix();
+                                    btn.setBackground(getResources().getDrawable(R.drawable.button_dark_gradient));
 
-                                    if (boardMatrix[_posY][_posX].getState() == Square.State.Close && boardMatrix[_posY][_posX].getFlag() == Square.Flag.No) {
-                                        _this.board.openSquare(_posY, _posX);
-                                    }
+                                    int heightBtn = (sizeBoardX / _this.board.getSizeX());
+                                    int widthBtn = (sizeBoardY / _this.board.getSizeY());
+
+                                    heightBtn = (heightBtn < 65) ? 65 : heightBtn;
+                                    widthBtn = (widthBtn < 65) ? 65 : widthBtn;
+Log.d("SIZE ", widthBtn + " - " + heightBtn);
+                                    btn.setLayoutParams(new ViewGroup.LayoutParams(heightBtn, widthBtn));
+
+                                    _this.uiSquares.put((j + "-" + i), btn);
+
+                                    final int _posX = i;
+                                    final int _posY = j;
+
+                                    btn.setOnClickListener(new View.OnClickListener() {
+                                        @Override
+                                        public void onClick(View v) {
+                                            Square[][] boardMatrix = _this.board.getBoardMatrix();
+
+                                            if (boardMatrix[_posY][_posX].getState() == Square.State.Close && boardMatrix[_posY][_posX].getFlag() == Square.Flag.No) {
+                                                _this.board.openSquare(_posY, _posX);
+                                            }
+                                        }
+                                    });
+
+                                    btn.setOnLongClickListener(new View.OnLongClickListener() {
+
+                                        @Override
+                                        public boolean onLongClick(View v) {
+                                            Square[][] boardMatrix = _this.board.getBoardMatrix();
+
+                                            if (boardMatrix[_posY][_posX].getState() == Square.State.Close && boardMatrix[_posY][_posX].getFlag() == Square.Flag.No) {
+                                                btn.setImageResource(R.drawable.ic_flag);
+                                                boardMatrix[_posY][_posX].setFlag(Square.Flag.Yes);
+                                            } else if (boardMatrix[_posY][_posX].getState() == Square.State.Close && boardMatrix[_posY][_posX].getFlag() == Square.Flag.Yes) {
+                                                btn.setImageResource(android.R.color.transparent);
+                                                boardMatrix[_posY][_posX].setFlag(Square.Flag.No);
+                                            }
+
+                                            return true;
+                                        }
+                                    });
+
+                                    _this.gridBoard.addView(btn);
                                 }
-                            });
-
-                            btn.setOnLongClickListener(new View.OnLongClickListener() {
-
-                                @Override
-                                public boolean onLongClick(View v) {
-                                    Square[][] boardMatrix = _this.board.getBoardMatrix();
-
-                                    if (boardMatrix[_posY][_posX].getState() == Square.State.Close && boardMatrix[_posY][_posX].getFlag() == Square.Flag.No) {
-                                        btn.setImageResource(R.drawable.ic_flag);
-                                        boardMatrix[_posY][_posX].setFlag(Square.Flag.Yes);
-                                    } else if (boardMatrix[_posY][_posX].getState() == Square.State.Close && boardMatrix[_posY][_posX].getFlag() == Square.Flag.Yes) {
-                                        btn.setImageResource(android.R.color.transparent);
-                                        boardMatrix[_posY][_posX].setFlag(Square.Flag.No);
-                                    }
-
-                                    return true;
-                                }
-                            });
-
-                            _this.gridBoard.addView(btn);
+                            }
+                            _this.boardUiDrawed = true;
                         }
                     }
-                    _this.boardUiDrawed = true;
-                }
+                });
             }
         });
     }
