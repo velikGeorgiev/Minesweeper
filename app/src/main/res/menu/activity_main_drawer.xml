@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <group android:checkableBehavior="single">
+        <item
+            android:id="@+id/nav_howto"
+            android:title="How to play" />
+    </group>
+
+    <item android:title="Configuration"
+        android:icon="@drawable/ic_menu_manage">
+        <menu>
+            <item
+                android:id="@+id/nav_difficulty"
+                android:title="Change difficulty" />
+            <item
+                android:id="@+id/nav_boardsize"
+                android:title="Change board size" />
+        </menu>
+    </item>
+
+</menu>
