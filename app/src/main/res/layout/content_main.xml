@@ -20,6 +20,7 @@
             android:layout_width="200dp"
             android:layout_height="match_parent"
             android:text="IVAN2"/>
+
     </LinearLayout>
 
 
@@ -27,8 +28,8 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:layout_below="@+id/haha"
-            android:paddingTop="20dp"
-            >
+            android:paddingTop="20dp">
+
         <HorizontalScrollView xmlns:android="http://schemas.android.com/apk/res/android"
             android:layout_width="wrap_content"
             android:layout_height="fill_parent">
@@ -43,8 +44,6 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content">
 
-
-
                     <GridLayout
                         android:layout_width="match_parent"
                         android:layout_height="match_parent"
@@ -53,10 +52,7 @@
                         android:layout_alignParentStart="true"
                         android:id="@+id/gridBoard"
                         android:horizontalSpacing="0dp"
-                        android:backgroundTint="#00FF0000"
-                        android:layout_weight="1"
-
-                        android:background="#00FF00">
+                        android:layout_weight="1">
                     </GridLayout>
 
                     <LinearLayout

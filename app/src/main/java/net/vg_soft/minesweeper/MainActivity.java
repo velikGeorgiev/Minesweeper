@@ -122,6 +122,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
 
         if (id == R.id.nav_howto) {
             startActivity(new Intent(MainActivity.this, InfoActivity.class));
+            overridePendingTransition(R.anim.slide_in_left, R.anim.slide_out_left);
         } else if (id == R.id.nav_difficulty) {
 
         } else if (id == R.id.nav_boardsize) {
