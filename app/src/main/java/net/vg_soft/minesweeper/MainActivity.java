@@ -19,17 +19,22 @@ import android.view.ViewGroup;
 import android.view.ViewTreeObserver;
 import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
+import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.GridLayout;
 import android.widget.ImageButton;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
 import android.widget.ScrollView;
+import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 
 import Engine.Board;
 import Engine.Events.OnGameOverListener;
@@ -40,7 +45,7 @@ import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
 import android.support.design.widget.NavigationView;
 
-public class MainActivity extends AppCompatActivity implements NavigationView.OnNavigationItemSelectedListener {
+public class MainActivity extends AppCompatActivity implements NavigationView.OnNavigationItemSelectedListener, AdapterView.OnItemSelectedListener {
 
     // Layout inflate view elements
     private GridLayout gridBoard;
@@ -51,6 +56,14 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
 
     private HashMap<String, ImageButton> uiSquares;
     private Board board;
+
+    private Spinner spnDifficulty;
+    private Spinner spnBoard;
+    private ImageView icStatus;
+
+    private static int difficulty;
+    private static int sizeX;
+    private static int sizeY;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -76,6 +89,8 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
 
         LinearLayout mainLayout = (LinearLayout)findViewById(R.id.mainLinerLayout);
 
+        icStatus = (ImageView) findViewById(R.id.icStatus);
+
         this.gridBoard = (GridLayout) mainLayout.findViewById(R.id.gridBoard);
         this.mineNumberLbl = (TextView) findViewById(R.id.mineNumberLbl);
         this.newGrid(10, 10, 2);
@@ -84,7 +99,56 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         this.numberImageResourceId = new int[] { R.drawable.ic_num0, R.drawable.ic_num1, R.drawable.ic_num2, R.drawable.ic_num3,
                 R.drawable.ic_num4, R.drawable.ic_num5, R.drawable.ic_num6,
                 R.drawable.ic_num7, R.drawable.ic_num8, R.drawable.ic_num9 };
+
+        spnDifficulty = (Spinner) findViewById(R.id.spnDifficulty);
+        spnDifficulty.setOnItemSelectedListener(this);
+
+        List<String> levelsOfDifficulty = new ArrayList<>();
+        levelsOfDifficulty.add(getString(R.string.veryeasy));
+        levelsOfDifficulty.add(getString(R.string.easy));
+        levelsOfDifficulty.add(getString(R.string.normal));
+        levelsOfDifficulty.add(getString(R.string.hard));
+        levelsOfDifficulty.add(getString(R.string.veryhard));
+
+        ArrayAdapter<String> difficultyAdapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item, levelsOfDifficulty);
+        difficultyAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        spnDifficulty.setAdapter(difficultyAdapter);
+
+        spnBoard = (Spinner) findViewById(R.id.spnBoard);
+        spnBoard.setOnItemSelectedListener(this);
+
+        List<String> boardSizes = new ArrayList<String>();
+        boardSizes.add("10x10");
+        boardSizes.add("10x20");
+        boardSizes.add("15x20");
+        boardSizes.add("25x25");
+
+        ArrayAdapter<String> boardAdapter = new ArrayAdapter<String>(this, android.R.layout.simple_spinner_item, boardSizes);
+        boardAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        spnBoard.setAdapter(boardAdapter);
     }
+
+    public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+        switch(parent.getId()) {
+            case R.id.spnDifficulty:
+                this.difficulty = position+1;
+                this.board.setDifficulty(this.difficulty);
+                newGrid(this.board.getSizeX(), this.board.getSizeY(), this.board.getDifficulty());
+                break;
+            case R.id.spnBoard:
+                String[] selected = (parent.getItemAtPosition(position).toString()).split("x");
+                this.sizeX = Integer.parseInt(selected[0]);
+                this.sizeY = Integer.parseInt(selected[1]);
+                this.board.setSizeX(this.sizeX);
+                this.board.setSizeY(this.sizeY);
+                newGrid(this.board.getSizeX(), this.board.getSizeY(), this.board.getDifficulty());
+                break;
+            default:
+                break;
+        }
+    }
+
+    public void onNothingSelected(AdapterView<?> arg0) {}
 
     @Override
     public void onBackPressed() {
@@ -124,9 +188,9 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
             startActivity(new Intent(MainActivity.this, InfoActivity.class));
             overridePendingTransition(R.anim.slide_in_left, R.anim.slide_out_left);
         } else if (id == R.id.nav_difficulty) {
-
+            spnDifficulty.performClick();
         } else if (id == R.id.nav_boardsize) {
-
+            spnBoard.performClick();
         }
 
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
@@ -144,6 +208,8 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
 
     private void newGrid(int gameSettingsX, int gameSettingsY, int gameSettingsLevel) {
         this.buildGrid(gameSettingsX, gameSettingsY, gameSettingsLevel, true);
+        this.icStatus.setImageResource(R.drawable.ic_alive);
+
     }
 
     private void restartGrid() {
@@ -178,12 +244,14 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
             this.board.addOnGameOverListeners(new OnGameOverListener() {
                 @Override
                 public void onWin() {
+                    icStatus.setImageResource(R.drawable.ic_safe);
                     Log.e("STATE", "WIN");
                 }
 
                 @Override
                 public void onLose() {
                     Log.e("STATE", "LOSE");
+                    icStatus.setImageResource(R.drawable.ic_dead);
                 }
             });
 

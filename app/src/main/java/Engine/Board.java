@@ -67,6 +67,18 @@ public class Board {
         return this.sizeY;
     }
 
+    public void setDifficulty(int aDifficulty) {
+        this.difficulty = aDifficulty;
+    }
+
+    public void setSizeX(int aSizeX) {
+        this.sizeX = aSizeX;
+    }
+
+    public void setSizeY(int aSizeY) {
+        this.sizeY = aSizeY;
+    }
+
     private void generateInitBoard() {
         for (int j = 0; j < this.sizeY; j++) {
             for (int i = 0; i < this.sizeX; i++) {
