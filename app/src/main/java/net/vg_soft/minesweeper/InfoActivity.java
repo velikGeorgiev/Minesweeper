@@ -21,7 +21,8 @@ public class InfoActivity extends AppCompatActivity {
     @Override
     public void onBackPressed() {
         super.onBackPressed();
-        startActivity(new Intent(InfoActivity.this, MainActivity.class));
+
+        this.finish();
         overridePendingTransition(R.anim.slide_in_left, R.anim.slide_out_left);
     }
 
@@ -29,7 +30,7 @@ public class InfoActivity extends AppCompatActivity {
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
             case android.R.id.home:
-                startActivity(new Intent(InfoActivity.this, MainActivity.class));
+                this.finish();
                 overridePendingTransition(R.anim.slide_in_left, R.anim.slide_out_left);
                 return true;
         }

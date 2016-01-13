@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <PreferenceCategory
+        android:title="Game Settings">
+
+        <CheckBoxPreference
+            android:key="sound"
+            android:title="Sounds"
+            android:summary="Enable sounds"/>
+
+        <EditTextPreference
+            android:key="name"
+            android:title="Nickname"
+            android:summary="Your nickname"
+            android:dialogTitle="Nickname"
+            android:inputType="text"/>
+
+    </PreferenceCategory>
+
+</PreferenceScreen>

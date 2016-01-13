@@ -8,7 +8,8 @@
     tools:context="evan.test.MainActivity"
     tools:showIn="@layout/app_bar_main"
     android:orientation="vertical"
-    android:id="@+id/scrollViewLayout">
+    android:id="@+id/scrollViewLayout"
+    android:background="@drawable/button_light_gradient">
 
     <Spinner
         android:layout_width="match_parent"
@@ -30,15 +31,37 @@
         android:id="@+id/haha"
         android:orientation="horizontal"
         android:padding="2dp"
-        android:gravity="center">
+        android:gravity="center"
+        android:background="@drawable/layout_shadow"
+        android:weightSum="3">
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:id="@+id/mineNumberLbl"
+            android:textSize="30sp"
+            android:textColor="#ffd500"
+            android:textAlignment="center"
+            android:paddingLeft="40dp"
+            android:layout_weight="1"/>
 
         <ImageView
-            android:layout_width="50dp"
+            android:layout_width="match_parent"
             android:layout_height="50dp"
             android:src="@drawable/ic_alive"
             android:scaleType="fitCenter"
             android:background="@null"
-            android:id="@+id/icStatus" />
+            android:id="@+id/icStatus"
+            android:layout_weight="1"
+            android:onClick="newGameAction" />
+
+        <Chronometer
+            android:textColor="#ffd500"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:id="@+id/chronometer"
+            android:textSize="30sp"
+            android:layout_weight="1" />
 
     </LinearLayout>
 
@@ -79,24 +102,6 @@
                         android:orientation="horizontal"
                         android:layout_weight="4"
                         android:layout_below="@+id/gridBoard">
-
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:id="@+id/mineNumberLbl"/>
-
-                        <Button android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="Try again"
-                            android:id="@+id/restartBtn"
-                            android:onClick="restartGameAction" />
-
-                        <Button android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="New Game"
-                            android:id="@+id/newGameBtn"
-                            android:onClick="newGameAction" />
-
                     </LinearLayout>
                 </RelativeLayout>
             </LinearLayout>

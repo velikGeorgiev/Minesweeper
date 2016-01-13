@@ -1,9 +1,15 @@
 package net.vg_soft.minesweeper;
 
+import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.drawable.BitmapDrawable;
+import android.media.MediaPlayer;
+import android.os.SystemClock;
+import android.os.Vibrator;
+import android.preference.PreferenceManager;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBarDrawerToggle;
@@ -14,6 +20,7 @@ import android.util.Log;
 import android.view.ContextThemeWrapper;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewTreeObserver;
@@ -22,6 +29,7 @@ import android.view.animation.AnimationUtils;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
+import android.widget.Chronometer;
 import android.widget.GridLayout;
 import android.widget.ImageButton;
 import android.widget.ImageView;
@@ -53,6 +61,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
 
     private boolean boardUiDrawed = false;
     private int[] numberImageResourceId;
+    private Chronometer chronometer;
 
     private HashMap<String, ImageButton> uiSquares;
     private Board board;
@@ -61,14 +70,23 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
     private Spinner spnBoard;
     private ImageView icStatus;
 
+    Vibrator mVibrator;
+
     private static int difficulty;
     private static int sizeX;
     private static int sizeY;
+
+    private SharedPreferences preferences;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        this.preferences = PreferenceManager.getDefaultSharedPreferences(getBaseContext());
+
+        chronometer = (Chronometer)findViewById(R.id.chronometer);
+        chronometer.start();
 
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
@@ -82,8 +100,8 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
         navigationView.setNavigationItemSelectedListener(this);
 
-        Board.imageBomb = '*'; // TODO: Implement
-        Board.imageFlag = 'f'; // TODO: Implement
+        Board.imageBomb = R.drawable.ic_minesweeper;
+        Board.imageFlag = R.drawable.green_flag;
 
         this.uiSquares = new HashMap<>();
 
@@ -93,7 +111,8 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
 
         this.gridBoard = (GridLayout) mainLayout.findViewById(R.id.gridBoard);
         this.mineNumberLbl = (TextView) findViewById(R.id.mineNumberLbl);
-        this.newGrid(10, 10, 2);
+
+        mVibrator = (Vibrator) getSystemService(Context.VIBRATOR_SERVICE);
 
         // Numeric image resource ids
         this.numberImageResourceId = new int[] { R.drawable.ic_num0, R.drawable.ic_num1, R.drawable.ic_num2, R.drawable.ic_num3,
@@ -126,13 +145,51 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         ArrayAdapter<String> boardAdapter = new ArrayAdapter<String>(this, android.R.layout.simple_spinner_item, boardSizes);
         boardAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         spnBoard.setAdapter(boardAdapter);
+
+        this.newGrid(10, 10, Board.GameDifficulty.EASY);
+
+        final ImageView faceStatus = (ImageView) findViewById(R.id.icStatus);
+
+        faceStatus.setOnTouchListener(new View.OnTouchListener(){
+            @Override
+            public boolean onTouch(View v, MotionEvent event){
+                if(event.getAction() == MotionEvent.ACTION_UP) {
+                    faceStatus.setImageResource(R.drawable.ic_alive);
+                    newGameAction(v);
+                } else {
+                    faceStatus.setImageResource(R.drawable.ic_dead);
+                }
+
+                return true;
+            }
+        });
     }
 
     public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
         switch(parent.getId()) {
             case R.id.spnDifficulty:
+                Board.GameDifficulty gameDifficulty = Board.GameDifficulty.VERY_EASY;
                 this.difficulty = position+1;
-                this.board.setDifficulty(this.difficulty);
+
+                switch(difficulty) {
+                    case 1:
+                        gameDifficulty = Board.GameDifficulty.VERY_EASY;
+                        break;
+                    case 2:
+                        gameDifficulty = Board.GameDifficulty.EASY;
+                        break;
+                    case 3:
+                        gameDifficulty = Board.GameDifficulty.NORMAL;
+                        break;
+                    case 4:
+                        gameDifficulty = Board.GameDifficulty.HARD;
+                        break;
+                    case 5:
+                        gameDifficulty = Board.GameDifficulty.VERY_HARD;
+                        break;
+                }
+
+                this.board.setDifficulty(gameDifficulty);
                 newGrid(this.board.getSizeX(), this.board.getSizeY(), this.board.getDifficulty());
                 break;
             case R.id.spnBoard:
@@ -173,6 +230,12 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         if (id == R.id.action_restart) {
             newGrid(this.board.getSizeX(), this.board.getSizeY(), this.board.getDifficulty());
             return true;
+        } else if (id == R.id.action_try_again) {
+            restartGrid();
+            return true;
+        } else if (id == R.id.action_settings) {
+            Intent intent = new Intent(this, SettingsActivity.class);
+            startActivity(intent);
         }
 
         return super.onOptionsItemSelected(item);
@@ -206,19 +269,26 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         newGrid(this.board.getSizeX(), this.board.getSizeY(), this.board.getDifficulty());
     }
 
-    private void newGrid(int gameSettingsX, int gameSettingsY, int gameSettingsLevel) {
+    private void newGrid(int gameSettingsX, int gameSettingsY, Board.GameDifficulty gameSettingsLevel) {
         this.buildGrid(gameSettingsX, gameSettingsY, gameSettingsLevel, true);
         this.icStatus.setImageResource(R.drawable.ic_alive);
-
+        chronometer.setBase(SystemClock.elapsedRealtime());
+        chronometer.start();
     }
 
     private void restartGrid() {
         this.buildGrid(this.board.getSizeX(), this.board.getSizeY(), this.board.getDifficulty(), false);
+        this.icStatus.setImageResource(R.drawable.ic_alive);
+        chronometer.setBase(SystemClock.elapsedRealtime());
+        chronometer.start();
     }
 
-    private void buildGrid(int gameSettingsX, int gameSettingsY, int gameSettingsLevel, boolean restart) {
+    private void buildGrid(int gameSettingsX, int gameSettingsY, Board.GameDifficulty gameSettingsLevel, boolean restart) {
+
 
         if(restart || this.board == null) {
+
+
             this.board = new Board(gameSettingsX, gameSettingsY, gameSettingsLevel);
             final MainActivity _this = this;
 
@@ -245,13 +315,36 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
                 @Override
                 public void onWin() {
                     icStatus.setImageResource(R.drawable.ic_safe);
-                    Log.e("STATE", "WIN");
+                    chronometer.stop();
+
+                    Animation a = AnimationUtils.loadAnimation(_this, R.anim.scale_counter);
+                    a.reset();
+                    ImageView tv = (ImageView) findViewById(R.id.icStatus);
+                    tv.clearAnimation();
+                    tv.startAnimation(a);
                 }
 
                 @Override
                 public void onLose() {
-                    Log.e("STATE", "LOSE");
                     icStatus.setImageResource(R.drawable.ic_dead);
+                    mVibrator.vibrate(2000);
+                    chronometer.stop();
+                    Animation a = AnimationUtils.loadAnimation(_this, R.anim.scale_counter);
+                    a.reset();
+                    ImageView tv = (ImageView) findViewById(R.id.icStatus);
+                    tv.clearAnimation();
+                    tv.startAnimation(a);
+
+                    Animation anim = AnimationUtils.loadAnimation(_this, R.anim.grid_anim);
+                    anim.reset();
+                    GridLayout gridAnim = (GridLayout) findViewById(R.id.gridBoard);
+                    gridAnim.clearAnimation();
+                    gridAnim.startAnimation(anim);
+
+                    if (_this.preferences.getBoolean("sound", true)) {
+                        MediaPlayer mPlayer = MediaPlayer.create(_this, R.raw.explosion);
+                        mPlayer.start();
+                    }
                 }
             });
 
@@ -267,6 +360,12 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
                     if (_this.mineNumberLbl != null) {
                         _this.mineNumberLbl.setText(--currentNumber + "");
                     }
+
+                    Animation a = AnimationUtils.loadAnimation(_this, R.anim.scale_counter);
+                    a.reset();
+                    TextView tv = (TextView) findViewById(R.id.mineNumberLbl);
+                    tv.clearAnimation();
+                    tv.startAnimation(a);
                 }
 
                 @Override
@@ -280,6 +379,12 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
                     if (_this.mineNumberLbl != null) {
                         _this.mineNumberLbl.setText(++currentNumber + "");
                     }
+
+                    Animation a = AnimationUtils.loadAnimation(_this, R.anim.scale_counter);
+                    a.reset();
+                    TextView tv = (TextView) findViewById(R.id.mineNumberLbl);
+                    tv.clearAnimation();
+                    tv.startAnimation(a);
                 }
             });
         }
@@ -330,7 +435,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
 
                                     heightBtn = (heightBtn < 65) ? 65 : heightBtn;
                                     widthBtn = (widthBtn < 65) ? 65 : widthBtn;
-Log.d("SIZE ", widthBtn + " - " + heightBtn);
+
                                     btn.setLayoutParams(new ViewGroup.LayoutParams(heightBtn, widthBtn));
 
                                     _this.uiSquares.put((j + "-" + i), btn);
@@ -342,9 +447,15 @@ Log.d("SIZE ", widthBtn + " - " + heightBtn);
                                         @Override
                                         public void onClick(View v) {
                                             Square[][] boardMatrix = _this.board.getBoardMatrix();
+                                            Log.e("Buyaaa", "A");
 
                                             if (boardMatrix[_posY][_posX].getState() == Square.State.Close && boardMatrix[_posY][_posX].getFlag() == Square.Flag.No) {
                                                 _this.board.openSquare(_posY, _posX);
+                                            }
+
+                                            if (_this.preferences.getBoolean("sound", true)) {
+                                                MediaPlayer mPlayer = MediaPlayer.create(_this, R.raw.click_sound);
+                                                mPlayer.start();
                                             }
                                         }
                                     });
@@ -353,11 +464,14 @@ Log.d("SIZE ", widthBtn + " - " + heightBtn);
 
                                         @Override
                                         public boolean onLongClick(View v) {
+
                                             Square[][] boardMatrix = _this.board.getBoardMatrix();
 
                                             if (boardMatrix[_posY][_posX].getState() == Square.State.Close && boardMatrix[_posY][_posX].getFlag() == Square.Flag.No) {
-                                                btn.setImageResource(R.drawable.ic_flag);
-                                                boardMatrix[_posY][_posX].setFlag(Square.Flag.Yes);
+                                                if ((_this.board.getTotalMines() > _this.board.getFlagedSquares())) {
+                                                    btn.setImageResource(Board.imageFlag);
+                                                    boardMatrix[_posY][_posX].setFlag(Square.Flag.Yes);
+                                                }
                                             } else if (boardMatrix[_posY][_posX].getState() == Square.State.Close && boardMatrix[_posY][_posX].getFlag() == Square.Flag.Yes) {
                                                 btn.setImageResource(android.R.color.transparent);
                                                 boardMatrix[_posY][_posX].setFlag(Square.Flag.No);
@@ -394,7 +508,7 @@ Log.d("SIZE ", widthBtn + " - " + heightBtn);
                             currentImageButton.setBackground(getResources().getDrawable(R.drawable.button_green_gradient));
                         }
 
-                        currentImageButton.setImageResource(R.mipmap.bomb);
+                        currentImageButton.setImageResource(Board.imageBomb);
                     } else if (boardMatrix[j][i].getType() == Square.Type.Empty) {
                         currentImageButton.setBackground(getResources().getDrawable(R.drawable.button_light_gradient));
                     } else {

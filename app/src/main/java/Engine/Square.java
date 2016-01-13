@@ -35,6 +35,7 @@ public class Square {
     }
 
     public void setFlag(Flag flag) {
+        this.flag = flag;
 
         if(flag == Flag.Yes) {
             for (OnSquareFlagListener listener : this.flagListeners) {
@@ -45,8 +46,6 @@ public class Square {
                 listener.onUnflag(this);
             }
         }
-
-        this.flag = flag;
     }
 
     public Flag getFlag() {

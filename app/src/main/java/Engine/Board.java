@@ -12,12 +12,12 @@ import Engine.Events.OnSquareFlagListener;
 import Engine.Events.OnSquareOpenListener;
 
 public class Board {
-    public static char imageBomb;
-    public static char imageFlag;
+    public static int imageBomb;
+    public static int imageFlag;
 
     private int sizeX;
     private int sizeY;
-    private int difficulty;
+    private GameDifficulty difficulty;
     private int numberOfMines;
     private int totalSquares;
     private Square[][] squares;
@@ -30,17 +30,45 @@ public class Board {
     private final List<OnSquareFlagListener> onSquareFlagListeners = new ArrayList<>();
     private final List<OnGameOverListener> onGameOverListeners = new ArrayList<>();
 
-    public Board(int sizeX, int sizeY, int difficulty) {
+    public enum GameDifficulty {
+        VERY_EASY, EASY, NORMAL, HARD, VERY_HARD
+    }
+
+    public Board(int sizeX, int sizeY, GameDifficulty difficulty) {
         this.sizeX = sizeX;
         this.sizeY = sizeY;
         this.difficulty = difficulty;
         this.squares = new Square[sizeY][sizeX];
         this.totalSquares = this.sizeX * this.sizeY;
-        this.numberOfMines = (int)Math.ceil(totalSquares * (this.difficulty / 10f)) - 15;
+        this.numberOfMines = 0;
         this.openSquares = 0;
         this.flagedSquares = 0;
 
+        switch (difficulty) {
+            case VERY_EASY:
+                this.numberOfMines = 2;
+//                this.numberOfMines = (int)Math.ceil(totalSquares * 0.1f);
+                break;
+            case EASY:
+                this.numberOfMines = (int)Math.ceil(totalSquares * 0.15f);
+                break;
+            case NORMAL:
+                this.numberOfMines = (int)Math.ceil(totalSquares * 0.2f);
+                break;
+            case HARD:
+                this.numberOfMines = (int)Math.ceil(totalSquares * 0.25f);
+                break;
+            case VERY_HARD:
+                this.numberOfMines = (int)Math.ceil(totalSquares * 0.30f);
+                break;
+
+        }
+
         this.generateInitBoard();
+    }
+
+    public int getFlagedSquares() {
+        return this.flagedSquares;
     }
 
     public void addOnSquareOpenListener(OnSquareOpenListener listener) {
@@ -51,7 +79,7 @@ public class Board {
         this.onMineOpenListeners.add(listener);
     }
 
-    public int getDifficulty() {
+    public GameDifficulty getDifficulty() {
         return this.difficulty;
     }
 
@@ -67,7 +95,7 @@ public class Board {
         return this.sizeY;
     }
 
-    public void setDifficulty(int aDifficulty) {
+    public void setDifficulty(GameDifficulty aDifficulty) {
         this.difficulty = aDifficulty;
     }
 
@@ -119,7 +147,7 @@ public class Board {
     }
 
     private void increaseOpenSquares() {
-        this.openSquares++;        Log.e("--->", this.openSquares + " " + this.flagedSquares + " --> " + (this.sizeX * this.sizeY) );
+        this.openSquares++;
 
         if((this.flagedSquares + this.openSquares) >= (this.sizeX * this.sizeY)) {
 
@@ -159,8 +187,9 @@ public class Board {
                 for(int x = 0; x < this.squares[c].length; x++) {
                     if((this.squares[c][x].getFlag() == Square.Flag.Yes && this.squares[c][x].getType() != Square.Type.Mine) ||
                             (this.squares[c][x].getFlag() == Square.Flag.No && this.squares[c][x].getType() == Square.Type.Mine)) {
-
                         win = false;
+
+                        Log.e("Status game " , (this.squares[c][x].getFlag() == Square.Flag.Yes && this.squares[c][x].getType() != Square.Type.Mine) + " " + (this.squares[c][x].getFlag() == Square.Flag.No && this.squares[c][x].getType() == Square.Type.Mine));
                     }
                 }
             }
